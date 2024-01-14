@@ -6,8 +6,8 @@ db:
     
 
 certbot:
-    email: otrousuario@email.es
-    domain: prestashop-daw.ddns.net
+    email: admin_wordpress@email.es
+    domain: hipherion1219.ddns.net
 
 phpmyadmin:
     user: pma_user

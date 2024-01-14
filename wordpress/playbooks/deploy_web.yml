@@ -8,57 +8,46 @@
 
   tasks:
 
-    - name: Descargar el código fuente de PrestaShop
+    - name: Borrar archivos previos de wordpress.
+      file:
+        path: /tmp/wp-cli.phar
+        state: absent
+
+    - name: Descargar el código fuente de Wordpress.
       get_url:
-        url: https://github.com/PrestaShop/PrestaShop/releases/download/8.0.1/prestashop_8.0.1.zip
+        url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         dest: /tmp
         mode: 0755
 
-    - name: Instalar unzip
-      apt: 
-        name: unzip
-        state: present
+    - name: Movemos el fichero a bin para incluirlo en la lista de comandos.
+      command: mv /tmp/wp-cli.phar /usr/local/bin/wp
+      become: yes  
 
-    - name: Descomprimir el paquete de PrestaShop
-      unarchive:
-        src: /tmp/prestashop_8.0.1.zip
-        dest: /tmp/
-        remote_src: true
-        
-    - name: Descomprimir el código fuente de PrestaShop
-      unarchive:
-        src: /tmp/prestashop.zip
-        dest: /var/www/html/
-        remote_src: yes
+    - name: Eliminamos instalaciones previas de wordpress.
+      command: rm -rf /var/www/html/*
+      become: yes 
 
-    - name: Modificamos los permisos del directorio /var/www/html
-      file:
-        path: /var/www/html
-        owner: www-data
-        group: www-data
-        recurse: yes
-        mode: 0755
-        
-    - name: Instalar PrestaShop desde PHP CLI
-      command:
-        php index_cli.php \
-        --language={{ prestashop.language }} \
-        --name={{ prestashop.name }} \
-        --country={{ prestashop.country }} \
-        --ssl={{ prestashop.ssl }} \
-        --firstname={{ prestashop.firstname }} \
-        --lastname={{ prestashop.lastname }} \
-        --email={{ prestashop.email }} \
-        --password={{ prestashop.password }} \
-        --db_server={{ prestashop.db_server }} \
-        --db_name={{ db.name }} \
-        --db_user={{ db.user }} \
-        --db_password={{ db.password }} \
-        --domain={{ certbot.domain }}
-      args:
-        chdir: /var/www/html/install
-      
-    - name: Eliminar el directorio de instalación
-      file:
-        path: /var/www/html/install
-        state: absent
+    - name: Descargamos el codigo fuente de wordpress en /var/www/html 
+      command: wp core download --path=/var/www/html --locale=es_ES --allow-root
+      become: yes 
+    
+    - name: Creación del archivo wp-config
+      command: wp config create \
+              --dbname=$WORDPRESS_DB_NAME \
+              --dbuser=$WORDPRESS_DB_USER \
+              --dbpass=$WORDPRESS_DB_PASSWORD \
+              --dbhost=$WORDPRESS_DB_HOST\
+              --path=/var/www/html \
+              --allow-root
+      become: yes
+
+    - name: Instalo wordpress
+      command: wp core install \
+                --url=$CERTIFICATE_DOMAIN \
+                --title="$wordpress_title" \
+                --admin_user=$wordpress_admin_user \
+                --admin_password=$wordpress_admin_pass \
+                --admin_email=$wordpress_admin_email \
+                --path=/var/www/html \
+                --allow-root
+      become: yes
