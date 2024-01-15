@@ -13,11 +13,11 @@
         name: certbot
         state: absent
 
-    -name: Instalar Certbot con snap
-     snap:
-      name: certbot
-      classic: yes
-      state: present
+    - name: Instalar Certbot con snap
+      snap:
+       name: certbot
+       classic: yes
+       state: present
       
 
     - name: Crear un alias para el comando certbot
