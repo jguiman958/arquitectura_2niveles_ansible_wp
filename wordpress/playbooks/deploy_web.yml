@@ -23,7 +23,7 @@
       command: mv /tmp/wp-cli.phar /usr/local/bin/wp 
 
     - name: Eliminamos instalaciones previas de wordpress.
-      command: rm -rf /var/www/html/*
+      shell: rm -rf /var/www/html/*
 
     - name: Descargamos el codigo fuente de wordpress en /var/www/html 
       command: wp core download --path=/var/www/html --locale=es_ES --allow-root
@@ -39,7 +39,7 @@
 
     - name: Instalo wordpress
       command: wp core install \
-                --url="{{ wordpress.domain }}" \
+                --url="{{ certbot.domain }}" \
                 --title="{{ wordpress.wordpress_title }}" \
                 --admin_user="{{ wordpress.wordpress_admin_user }}" \
                 --admin_password="{{ wordpress.wordpress_admin_pass }}" \
@@ -55,9 +55,6 @@
    
    - name: Instalamos un plugin para wordpress. 
      command: wp plugin install bbpress --activate --path=/var/www/html --allow-root
-
-   - name: Configuramos la variables https = on
-     command: sed -i "/COLLATE/a \$_SERVER['HTTPS'] = 'on';" /var/www/html/wp-config.php
    
    - name: Instalación del plugin para ocultar login.
      command: wp plugin install wps-hide-login --activate --path=/var/www/html --allow-root
@@ -66,6 +63,8 @@
      command:  wp rewrite structure '/%postname%/' \
                --path=/var/www/html \
                --allow-root
-   - name:             
-     wp option update whl_page $WORDPRESS_HIDE_LOGIN --path=/var/www/html --allow-root
+               
+   - name: Actualizar el plugin de wordpress para cambiar el fichero de la página de logín a otro y no aparezca en el navegador.            
+     command: wp option update whl_page "{{ wordpress.WORDPRESS_HIDE_LOGIN }}" --path=/var/www/html --allow-root
+    
      
