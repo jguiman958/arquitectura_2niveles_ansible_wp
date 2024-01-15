@@ -370,27 +370,44 @@ Estas son las variables con las que trabaja el fichero .yml de certbot.
 
 Aquí se va a explicar las instrucciones del despliegue automatizado de wordpress.
 
+# Este fichero va a actuar sobre los hosts frontend.
 ```python
 name: Playbook para hacer el deploy de la aplicación web PrestaShop
   hosts: frontend
   become: yes
+```
 
+### Declaramos las variables para el fichero.
+```
   vars_files:
     - ../vars/variables.yml
+```
+Necesario para instalar wordpress.
 
+### Con esto borramos los archivos previos de wordpress.
+```
   tasks:
 
     - name: Borrar archivos previos de wordpress.
       file:
         path: /tmp/wp-cli.phar
         state: absent
+```
+Vamos a borrar archivo previos de wordpress para evitar que se creen mas de uno.
 
+### Con esto, descargamos el codigo fuente de wordpress en el directorio tmp.
+```
     - name: Descargar el código fuente de Wordpress.
       get_url:
         url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         dest: /tmp
         mode: 0755
+```
 
+Empleamos mode, para asignar permisos a ese directorio automaticamente en el destino.
+
+### Configuraciones importantes.
+```
     - name: Movemos el fichero a bin para incluirlo en la lista de comandos.
       command: mv /tmp/wp-cli.phar /usr/local/bin/wp 
 
@@ -399,7 +416,12 @@ name: Playbook para hacer el deploy de la aplicación web PrestaShop
 
     - name: Descargamos el codigo fuente de wordpress en /var/www/html 
       command: wp core download --path=/var/www/html --locale=es_ES --allow-root
-    
+```
+Aquí estamos moviendo el fichero a ``bin para que actue como un comando``, con shell actuamos directamente sobre la shell de la máquina borrando todo el contenido de html, necesario en caso de que se quiera ejecutar de nuevo el playbook, y finalmente descargamos el codigo fuente de wordpress en html, ubicación en la que se mostrará el contenido.
+
+### Creamos el archivo wp-config.
+Para incorporar la base de datos y la máquina que contenido el servidor mysql.
+```
     - name: Creación del archivo wp-config
       command: wp config create \
               --dbname="{{ db.name }}" \
@@ -408,7 +430,22 @@ name: Playbook para hacer el deploy de la aplicación web PrestaShop
               --dbhost="{{ db.MYSQL_PRIVATE }}" \
               --path=/var/www/html \
               --allow-root
+```
+Variables del fichero:
+```
+    name: wordpress_db
+    user: wordpress_user
+    password: wordpress_passwd
+    MYSQL_PRIVATE: 172.31.86.216
+```
+Como podemos comprobar el llamamiento a esas variables, se emplea de esta forma,
+"{{ db.MYSQL_PRIVATE }}" el lugar donde se encuentran, bd y la variable en cuestión.
 
+
+
+### Instalamos wordpress.
+Con todo previamente descargado, comenzamos con la instalación de wordpress, incluyendo esta serie de variables.
+```
     - name: Instalo wordpress
       command: wp core install \
                 --url="{{ certbot.domain }}" \
@@ -418,7 +455,22 @@ name: Playbook para hacer el deploy de la aplicación web PrestaShop
                 --admin_email="{{ wordpress.wordpress_admin_email }}" \
                 --path=/var/www/html \
                 --allow-root
-                
+```
+Variables del fichero:
+```
+    wordpress_title: "Sitio web de IAW"
+    wordpress_admin_user: admin
+    wordpress_admin_pass: admin
+    wordpress_admin_email: demo@demo.es
+    WORDPRESS_DB_HOST: 172.31.86.216
+    WORDPRESS_HIDE_LOGIN: acceso
+    domain: hipherion1219.ddns.net
+```
+Necesarias para instalar wordpress... cogiendo como dominio el que hemos creado anteriormente en certbot.
+
+
+### Instalación y configuración de plugins, temas, incluyendo la actualización del nucleo de wordpress.
+```             
     - name: Actualizamos el core de wordpress.
       command: wp core update --path=/var/www/html --allow-root
 
@@ -430,21 +482,44 @@ name: Playbook para hacer el deploy de la aplicación web PrestaShop
    
     - name: Instalación del plugin para ocultar login.
       command: wp plugin install wps-hide-login --activate --path=/var/www/html --allow-root
+```
 
+Con esto, instalamos y actualizamos una serie de plugins y temas.
+
+### Habilitamos la reescritura para mejorar el seo.
+
+```
     - name: Habilitamos reescritura para mejorar el seo.
       command:  wp rewrite structure '/%postname%/' \
                --path=/var/www/html \
                --allow-root
-               
+```
+Lo hacemos con command ya que no es posible realizarlo con algún modulo de ansible.
+
+### Actualizamos el login de wordpress para actualizar el login y mejorar la seguridad.
+```
     - name: Actualizar el plugin de wordpress para cambiar el fichero de la página de logín a otro y no aparezca en el navegador.            
       command: wp option update whl_page "{{ wordpress.WORDPRESS_HIDE_LOGIN }}" --path=/var/www/html --allow-root
-    
+```
+Variable requerida:
+```
+WORDPRESS_HIDE_LOGIN: acceso
+```
+Pasará de login a ``acceso``.
+
+### Copiamos el archivo .htaccess al host remoto.
+``` 
     - name: Copiar el archivo .htacces
       template: # Si se hace con template se modifica el contenido con variables y además manda el contenido a la máquina destino.
          src: ../templates/.htaccess
          dest: /var/www/html/
          mode: 0755
+```
 
+Necesario para la realizar las normas de reescritura.
+
+### Cambiamos el propietario de forma recursiva.
+```
     - name: Cambiar el propietario de html. 
       file: 
         dest: /var/www/html
@@ -452,3 +527,18 @@ name: Playbook para hacer el deploy de la aplicación web PrestaShop
         group: www-data
         recurse: yes
 ```
+
+Empleamos ``owner, group y recurse para ello``.
+
+# Como ejecutar el playbook.
+Para ello en el directorio wordpress ejecuta lo siguiente:
+```
+ansible-playbook -i /home/ubuntu/arquitectura_2niveles_ansible_wp/wordpress/inventory/inventory main.yml
+```
+
+Con ello se ejecutará todo automáticamente.
+
+# Comprobación de que funciona:
+Aquí tenemos la página de wordpress en pleno funcionamiento.
+
+![Alt text](wordpress/capturas/Captura.PNG)
