@@ -10,6 +10,7 @@ wordpress:
     wordpress_admin_user: admin
     wordpress_admin_pass: admin
     wordpress_admin_email: demo@demo.es
+    WORDPRESS_DB_HOST: 172.31.86.216
 
 certbot:
     email: admin_wordpress@email.es
