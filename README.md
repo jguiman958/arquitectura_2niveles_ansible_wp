@@ -307,3 +307,53 @@ Con este modulo de ansible podemos reemplazar contenido facilmente.
         state: restarted
 ```
 Empleando el módulo ``restarted``.
+
+# Cifrado seguro en las peticiones HTTP
+
+Aquí voy a mostrar el contenido del fichero config_https.yml para automatizar el proceso de un certificado validado por una autoridad certificadora.
+
+
+### Desintalamos previamente certbot.
+```
+tasks:
+
+    - name: Desinstalar instalaciones previas de Certbot
+      snap:
+        name: certbot
+        state: absent
+```
+Empleando ``state: absent``.
+
+### Instalamos certbot empleando snap.
+```
+    - name: Instalar Certbot con snap
+      snap:
+       name: certbot
+       classic: yes
+       state: present
+```      
+
+Para instalar algo con snap necesitamos, ``classic: yes``.
+
+### Creamos un enlace simbolico a bin para que certbot actúe como un comando.
+
+```
+    - name: Crear un alias para el comando certbot
+      command: ln -s -f /snap/bin/certbot /usr/bin/certbot
+```
+
+Necesario para ejecutarlo como si un comando se tratara.
+
+### Solicitamos y configuramos el certificado a Let´s Encrypt para securizar http.
+```
+    - name: Solicitar y configurar certificado SSL/TLS a Let's Encrypt con certbot
+      command:
+        certbot --apache \
+        -m {{ certbot.email }} \
+        --agree-tos \
+        --no-eff-email \
+        --non-interactive \
+        -d {{ certbot.domain }}
+```
+
+Incluyendo las variables ``certbot.email`` y ``certbot.domain`` las cuales contienen el correo y el dominio al que se va a poder realizar búsquedas via internet, insertando el dominio en el buscador.
