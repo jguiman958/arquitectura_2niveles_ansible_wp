@@ -3,7 +3,7 @@ db:
     name: wordpress_db
     user: wordpress_user
     password: wordpress_passwd
-    
+    MYSQL_PRIVATE: 172.31.86.216
 
 certbot:
     email: admin_wordpress@email.es
