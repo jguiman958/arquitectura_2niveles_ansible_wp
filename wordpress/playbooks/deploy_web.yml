@@ -67,4 +67,14 @@
    - name: Actualizar el plugin de wordpress para cambiar el fichero de la página de logín a otro y no aparezca en el navegador.            
      command: wp option update whl_page "{{ wordpress.WORDPRESS_HIDE_LOGIN }}" --path=/var/www/html --allow-root
     
-     
+   - name: Copiar el archivo .htacces
+     template: # Si se hace con template se modifica el contenido con variables y además manda el contenido a la máquina destino.
+        src: ../templates/.htaccess
+        dest: /var/www/html/
+        mode: 0755
+
+    - name: Cambiar el propietario de html. 
+      file: 
+        dest: /var/www/html
+        owner: www-data
+        group: www-data

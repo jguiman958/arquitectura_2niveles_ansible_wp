@@ -15,7 +15,7 @@
         state: present
       
     - name: Copiar el archivo de configuración de Apache
-      copy: # Si se hace con template se modifica el contenido con variables y además manda el contenido a la máquina destino.
+      template: # Si se hace con template se modifica el contenido con variables y además manda el contenido a la máquina destino.
         src: ../templates/000-default.conf
         dest: /etc/apache2/sites-available/
         mode: 0755
