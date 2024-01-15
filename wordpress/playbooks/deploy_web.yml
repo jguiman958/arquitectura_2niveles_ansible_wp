@@ -20,34 +20,52 @@
         mode: 0755
 
     - name: Movemos el fichero a bin para incluirlo en la lista de comandos.
-      command: mv /tmp/wp-cli.phar /usr/local/bin/wp
-      become: yes  
+      command: mv /tmp/wp-cli.phar /usr/local/bin/wp 
 
     - name: Eliminamos instalaciones previas de wordpress.
       command: rm -rf /var/www/html/*
-      become: yes 
 
     - name: Descargamos el codigo fuente de wordpress en /var/www/html 
       command: wp core download --path=/var/www/html --locale=es_ES --allow-root
-      become: yes 
     
     - name: Creación del archivo wp-config
       command: wp config create \
-              --dbname=$WORDPRESS_DB_NAME \
-              --dbuser=$WORDPRESS_DB_USER \
-              --dbpass=$WORDPRESS_DB_PASSWORD \
-              --dbhost=$WORDPRESS_DB_HOST\
+              --dbname="{{ wordpress.name }}" \
+              --dbuser="{{ wordpress.user }}"  \
+              --dbpass="{{ wordpress.password }}" \
+              --dbhost="{{ wordpress.MYSQL_PRIVATE }}" \
               --path=/var/www/html \
               --allow-root
-      become: yes
 
     - name: Instalo wordpress
       command: wp core install \
-                --url=$CERTIFICATE_DOMAIN \
-                --title="$wordpress_title" \
-                --admin_user=$wordpress_admin_user \
-                --admin_password=$wordpress_admin_pass \
-                --admin_email=$wordpress_admin_email \
+                --url="{{ wordpress.domain }}" \
+                --title="{{ wordpress.wordpress_title }}" \
+                --admin_user="{{ wordpress.wordpress_admin_user }}" \
+                --admin_password="{{ wordpress.wordpress_admin_pass }}" \
+                --admin_email="{{ wordpress.wordpress_admin_email }}" \
                 --path=/var/www/html \
                 --allow-root
-      become: yes
+                
+   - name: Actualizamos el core de wordpress.
+     command: wp core update --path=/var/www/html --allow-root
+
+   - name: Instalamos un tema para wordpress
+     command: wp theme install sydney --activate --path=/var/www/html --allow-root
+   
+   - name: Instalamos un plugin para wordpress. 
+     command: wp plugin install bbpress --activate --path=/var/www/html --allow-root
+
+   - name: Configuramos la variables https = on
+     command: sed -i "/COLLATE/a \$_SERVER['HTTPS'] = 'on';" /var/www/html/wp-config.php
+   
+   - name: Instalación del plugin para ocultar login.
+     command: wp plugin install wps-hide-login --activate --path=/var/www/html --allow-root
+
+   - name: Habilitamos reescritura para mejorar el seo.
+     command:  wp rewrite structure '/%postname%/' \
+               --path=/var/www/html \
+               --allow-root
+   - name:             
+     wp option update whl_page $WORDPRESS_HIDE_LOGIN --path=/var/www/html --allow-root
+     
