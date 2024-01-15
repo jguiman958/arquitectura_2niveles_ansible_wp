@@ -11,6 +11,7 @@ wordpress:
     wordpress_admin_pass: admin
     wordpress_admin_email: demo@demo.es
     WORDPRESS_DB_HOST: 172.31.86.216
+    WORDPRESS_HIDE_LOGIN: acceso
 
 certbot:
     email: admin_wordpress@email.es
