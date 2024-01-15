@@ -5,6 +5,12 @@ db:
     password: wordpress_passwd
     MYSQL_PRIVATE: 172.31.86.216
 
+wordpress:
+    wordpress_title: "Sitio web de IAW"
+    wordpress_admin_user: admin
+    wordpress_admin_pass: admin
+    wordpress_admin_email: demo@demo.es
+
 certbot:
     email: admin_wordpress@email.es
     domain: hipherion1219.ddns.net
